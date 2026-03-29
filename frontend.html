@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pothole Detection System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-road"></i> Pothole Detection System</h1>
+                <p>AI-powered pothole detection using Convolutional Neural Networks</p>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </button>
+            <button class="tab-btn" onclick="switchTab('train')">
+                <i class="fas fa-cogs"></i> Train Model
+            </button>
+            <button class="tab-btn" onclick="switchTab('test')">
+                <i class="fas fa-vial"></i> Test Model
+            </button>
+            <button class="tab-btn" onclick="switchTab('live')">
+                <i class="fas fa-video"></i> Live Detection
+            </button>
+            <button class="tab-btn" onclick="switchTab('settings')">
+                <i class="fas fa-cog"></i> Settings
+            </button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line"></i> Model Performance</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="current-accuracy">--</div>
+                                <div class="metric-label">Current Accuracy</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="total-detections">--</div>
+                                <div class="metric-label">Total Detections</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="pothole-count">--</div>
+                                <div class="metric-label">Potholes Found</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="plain-count">--</div>
+                                <div class="metric-label">Plain Roads</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="performance-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-images"></i> Recent Results</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="recent-results" class="recent-results">
+                            <p class="no-data">No recent results available</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-info-circle"></i> System Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <i class="fas fa-check-circle status-ok"></i>
+                                <span>Model Loaded</span>
+                                <span id="model-status">Not loaded</span>
+                            </div>
+                            <div class="status-item">
+                                <i class="fas fa-database status-ok"></i>
+                                <span>Dataset Ready</span>
+                                <span id="dataset-status">Checking...</span>
+                            </div>
+                            <div class="status-item">
+                                <i class="fas fa-microchip status-ok"></i>
+                                <span>GPU Available</span>
+                                <span id="gpu-status">Checking...</span>
+                            </div>
+                            <div class="status-item">
+                                <i class="fas fa-camera status-ok"></i>
+                                <span>Camera Ready</span>
+                                <span id="camera-status">Checking...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Train Model Tab -->
+        <div id="train" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-cogs"></i> Model Training Configuration</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="image-size">Image Size (pixels)</label>
+                            <input type="number" id="image-size" value="300" min="50" max="512">
+                        </div>
+                        <div class="form-group">
+                            <label for="epochs">Training Epochs</label>
+                            <input type="number" id="epochs" value="100" min="10" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="batch-size">Batch Size</label>
+                            <input type="number" id="batch-size" value="32" min="1" max="128">
+                        </div>
+                        <div class="form-group">
+                            <label for="validation-split">Validation Split</label>
+                            <input type="number" id="validation-split" value="0.1" step="0.05" min="0.05" max="0.5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="startTraining()">
+                            <i class="fas fa-play"></i> Start Training
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopTraining()">
+                            <i class="fas fa-stop"></i> Stop Training
+                        </button>
+                        <button class="btn btn-info" onclick="loadExistingModel()">
+                            <i class="fas fa-folder-open"></i> Load Existing Model
+                        </button>
+                    </div>
+
+                    <div id="training-progress" class="progress-container" style="display: none;">
+                        <div class="progress-header">
+                            <span>Training Progress</span>
+                            <span id="progress-text">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-details">
+                            <span id="epoch-info">Epoch 0/0</span>
+                            <span id="loss-info">Loss: --</span>
+                            <span id="accuracy-info">Accuracy: --</span>
+                        </div>
+                    </div>
+
+                    <div id="training-results" class="results-container" style="display: none;">
+                        <h4>Training Results</h4>
+                        <div class="results-grid">
+                            <div class="result-card">
+                                <h5>Final Accuracy</h5>
+                                <div class="result-value" id="final-accuracy">--</div>
+                            </div>
+                            <div class="result-card">
+                                <h5>Final Loss</h5>
+                                <div class="result-value" id="final-loss">--</div>
+                            </div>
+                            <div class="result-card">
+                                <h5>Training Time</h5>
+                                <div class="result-value" id="training-time">--</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="training-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Model Tab -->
+        <div id="test" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-vial"></i> Model Testing</h3>
+                </div>
+                <div class="card-body">
+                    <div class="test-controls">
+                        <div class="file-input-group">
+                            <label class="file-label">
+                                <input type="file" id="test-image-input" accept="image/*" multiple>
+                                <i class="fas fa-upload"></i> Select Test Images
+                            </label>
+                            <button class="btn btn-secondary" onclick="loadTestDataset()">
+                                <i class="fas fa-database"></i> Load Test Dataset
+                            </button>
+                        </div>
+                        
+                        <div class="test-options">
+                            <label>
+                                <input type="checkbox" id="show-confidence" checked>
+                                Show Confidence Scores
+                            </label>
+                            <label>
+                                <input type="checkbox" id="save-results" checked>
+                                Save Results
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="test-results">
+                        <div class="results-summary">
+                            <div class="summary-item">
+                                <span>Total Images:</span>
+                                <span id="total-images">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Potholes Detected:</span>
+                                <span id="detected-potholes">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Plain Roads:</span>
+                                <span id="detected-plain">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Accuracy:</span>
+                                <span id="test-accuracy">--</span>
+                            </div>
+                        </div>
+
+                        <div id="test-results-grid" class="results-grid">
+                            <!-- Test results will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Detection Tab -->
+        <div id="live" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-video"></i> Live Pothole Detection</h3>
+                </div>
+                <div class="card-body">
+                    <div class="live-controls">
+                        <button class="btn btn-success" id="start-camera-btn" onclick="startCamera()">
+                            <i class="fas fa-play"></i> Start Camera
+                        </button>
+                        <button class="btn btn-danger" id="stop-camera-btn" onclick="stopCamera()" disabled>
+                            <i class="fas fa-stop"></i> Stop Camera
+                        </button>
+                        <button class="btn btn-primary" id="capture-btn" onclick="captureFrame()" disabled>
+                            <i class="fas fa-camera"></i> Capture Frame
+                        </button>
+                        <button class="btn btn-info" onclick="toggleBoundingBoxes()">
+                            <i class="fas fa-vector-square"></i> Toggle Bounding Boxes
+                        </button>
+                    </div>
+
+                    <div class="live-container">
+                        <div class="video-container">
+                            <video id="live-video" autoplay playsinline></video>
+                            <canvas id="overlay-canvas"></canvas>
+                        </div>
+                        
+                        <div class="detection-panel">
+                            <div class="detection-stats">
+                                <h4>Live Detection Stats</h4>
+                                <div class="stat-item">
+                                    <span>Status:</span>
+                                    <span id="detection-status" class="status-indicator">Idle</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Frame Rate:</span>
+                                    <span id="frame-rate">-- fps</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Potholes Found:</span>
+                                    <span id="live-potholes">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Last Detection:</span>
+                                    <span id="last-detection">--</span>
+                                </div>
+                            </div>
+                            
+                            <div class="detection-history">
+                                <h4>Recent Detections</h4>
+                                <div id="detection-history-list">
+                                    <p class="no-data">No detections yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-cog"></i> System Settings</h3>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h4>Model Settings</h4>
+                            <div class="setting-item">
+                                <label for="model-path">Model File Path</label>
+                                <input type="text" id="model-path" placeholder="Path to model file (.h5 or .keras)">
+                            </div>
+                            <div class="setting-item">
+                                <label for="dataset-path">Dataset Path</label>
+                                <input type="text" id="dataset-path" placeholder="Path to dataset folder">
+                            </div>
+                            <div class="setting-item">
+                                <label for="confidence-threshold">Confidence Threshold</label>
+                                <input type="range" id="confidence-threshold" min="0" max="1" step="0.01" value="0.6">
+                                <span id="threshold-value">0.60</span>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Camera Settings</h4>
+                            <div class="setting-item">
+                                <label for="camera-width">Camera Width</label>
+                                <input type="number" id="camera-width" value="640" min="320" max="1920">
+                            </div>
+                            <div class="setting-item">
+                                <label for="camera-height">Camera Height</label>
+                                <input type="number" id="camera-height" value="480" min="240" max="1080">
+                            </div>
+                            <div class="setting-item">
+                                <label for="detection-interval">Detection Interval (ms)</label>
+                                <input type="number" id="detection-interval" value="100" min="50" max="1000">
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Display Settings</h4>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="dark-mode">
+                                    Enable Dark Mode
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="show-grid">
+                                    Show Grid Overlay
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="auto-save">
+                                    Auto-save Results
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadSettings()">
+                            <i class="fas fa-undo"></i> Load Settings
+                        </button>
+                        <button class="btn btn-warning" onclick="resetSettings()">
+                            <i class="fas fa-undo-alt"></i> Reset to Default
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
