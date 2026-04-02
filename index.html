@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pothole Detection Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; }
+        .container { display: flex; flex-direction: column; align-items: center; }
+        img { border: 2px solid #30363d; border-radius: 8px; max-width: 90%; margin: 10px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+        th, td { border: 1px solid #30363d; padding: 8px; }
+        .status-anomaly { color: #f85149; }
+    </style>
+</head>
+<body>
+    <h1>Pothole Detection System</h1>
+    <div>
+        <button onclick="fetch('/toggle_camera')">Toggle Camera</button>
+        <button onclick="fetch('/toggle_detection')">Toggle Detection</button>
+    </div>
+    <div class="container">
+        <img src="{{ url_for('video_feed') }}" alt="Live Feed">
+        <h3>Spatial Density Heatmap</h3>
+        <img id="heatmap-img" src="" alt="Heatmap">
+        <h3>Detection Logs</h3>
+        <table id="log-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Confidence</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        function updateLogs() {
+            $.getJSON('/log_data', function(data) {
+                let tbody = $('#log-table tbody');
+                tbody.empty();
+                data.reverse().forEach(row => {
+                    let statusClass = row.status === 'ANOMALY' ? 'status-anomaly' : '';
+                    tbody.append(`<tr>
+                        <td>${row.timestamp}</td>
+                        <td>${(row.confidence * 100).toFixed(1)}%</td>
+                        <td class="${statusClass}">${row.status}</td>
+                    </tr>`);
+                });
+            });
+        }
+        function updateHeatmap() {
+            fetch('/heatmap').then(r => r.text()).then(d => $('#heatmap-img').attr('src', d));
+        }
+        setInterval(updateLogs, 2000);
+        setInterval(updateHeatmap, 5000);
+    </script>
+</body>
+</html>
